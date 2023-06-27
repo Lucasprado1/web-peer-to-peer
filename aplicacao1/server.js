@@ -1,5 +1,8 @@
 const net = require('net');
 const readline = require('readline');
+const express = require('express');
+const cors = require('cors');
+const app = express();
 
 function iniciarServidor() {
   const server = net.createServer((socket) => {
@@ -50,43 +53,42 @@ function desligaServidor(){
 }
 
 
-function iniciarCliente(){
+// Função para enviar dados ao servidor TCP
+function enviarDadosParaServidorTCP(dados) {
+  const clienteTCP = net.createConnection({ port: 3030 }, () => {
+    console.log('Conectado ao servidor TCP.');
 
-  const client = net.createConnection({ port: 3030 }, () => {
-    console.log('Conectado ao servidor.');
+    // Enviar dados para o servidor TCP
+    clienteTCP.write(dados);
 
-    // Enviar uma mensagem para o servidor
-    client.write('Olá, servidor!');
-
-    // Inicia a leitura do terminal para enviar mensagens
-    startTerminalInput();
+    // Fechar a conexão após o envio dos dados
+    clienteTCP.end();
   });
 
-  client.on('data', (data) => {
-    console.log(`Resposta do servidor: ${data}`);
+  clienteTCP.on('end', () => {
+    console.log('Desconectado do servidor TCP.');
   });
 
-  client.on('end', () => {
-    console.log('Desconectado do servidor.');
+  clienteTCP.on('error', (err) => {
+    console.error('Erro na conexão com o servidor TCP:', err);
   });
-
-  function startTerminalInput() {
-    const rl = readline.createInterface({
-      input: process.stdin,
-      output: process.stdout,
-    });
-
-    rl.prompt();
-
-    rl.on('line', (input) => {
-      // Enviar a mensagem digitada no terminal para o servidor
-      client.write(input);
-
-      rl.prompt();
-    }).on('close', () => {
-      console.log('Fechando cliente.');
-      process.exit(0);
-    });
-  }
 }
+
+
+app.use(cors());
+app.use(express.json());
+
+app.post('/dados', (req, res) => {
+  const dadosRecebidos = req.body; // Obter os dados enviados pelo Angular
+
+  // Executar a lógica desejada com os dados recebidos
+  console.log('Dados recebidos do Angular:', dadosRecebidos);
+  enviarDadosParaServidorTCP(JSON.stringify(dadosRecebidos));
+  res.status(200).json({ message: 'Dados recebidos com sucesso!' });
+});
+
+const PORT = 4000;
+app.listen(PORT, () => {
+  console.log(`Servidor HTTP ouvindo na porta ${PORT}`);
+});
 
