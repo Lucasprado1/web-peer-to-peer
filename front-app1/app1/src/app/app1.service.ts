@@ -15,21 +15,8 @@ export class App1Service {
     return this.http.post(`${this.apiUrl}/dados`, dados);
   }
 
-  startDataUpdates() {
-    // Chama o método inicialmente e, em seguida, a cada 2 segundos
-    this.receiveDataFromBackend();
-    interval(2000).subscribe(() => {
-      this.receiveDataFromBackend();
-    });
-  }
-
   receiveDataFromBackend() {
-    this.http.get<any>('http://localhost:4000/pegardados').subscribe(
-      response => {
-        console.log('Dados recebidos do backend:', response);
-        // Faça o processamento necessário com os dados recebidos do backend
-      }
-    );
+    return this.http.get<any>('http://localhost:4000/pegardados')
   }
 }
 

@@ -3,7 +3,7 @@ const readline = require('readline');
 const express = require('express');
 const cors = require('cors');
 const app = express();
-let dados_recebidos = "sem dados recebidos"
+let dados_recebidos = ""
 
 function iniciarServidor() {
   const server = net.createServer((socket) => {
@@ -11,9 +11,8 @@ function iniciarServidor() {
 
     socket.on('data', (data) => {
       console.log(`Dados recebidos do cliente: ${data}`);
-      dados_recebidos = `${data}`;
-
-
+      dataObject = JSON.parse(data); //GERA OBJETO PARA INTEGRAR COM C
+      dados_recebidos = dataObject.texto;
       // Processar os dados recebidos, se necessário
 
       // Enviar uma resposta de volta para o cliente

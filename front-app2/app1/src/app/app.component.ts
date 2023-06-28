@@ -1,16 +1,15 @@
 import { Component } from '@angular/core';
 import { App1Service } from './app1.service';
 import { interval } from 'rxjs';
-
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss']
 })
 export class AppComponent {
-  public mensagem: any = '';
+
   ngOnInit() {
-    this.app1service.startDataUpdates();
+    this.startDataUpdates();
   }
   title = 'app1';
 
@@ -21,6 +20,7 @@ export class AppComponent {
   public texto: any = '';
   public chave: any = '';
   public selectedOption: any = 'RC4';
+  public chatResponse = ''
   send(){
     console.log(this.texto);
     console.log(this.chave);
@@ -41,5 +41,15 @@ export class AppComponent {
         // Lógica para lidar com erros na chamada ao backend
       }
     );
+  }
+
+  startDataUpdates() {
+    // Chama o método inicialmente e, em seguida, a cada 2 segundos
+    this.app1service.receiveDataFromBackend();
+    interval(2000).subscribe(() => {
+      this.app1service.receiveDataFromBackend().subscribe( res =>{
+        this.chatResponse = res
+      });
+    });
   }
 }
