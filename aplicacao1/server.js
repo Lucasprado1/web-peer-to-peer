@@ -24,6 +24,32 @@ const binaryNumber = 111; // Exemplo de número binário
 
 // INTEGRAÇÃO COM C
 
+// TRECHO DE INTEGRAÇÃO COM C
+// const ffi2 = require('ffi-napi');
+const ref = require('ref-napi');
+
+// Carregar a biblioteca compartilhada
+const lib2 = ffi.Library('./sdes.so', {
+  'criptografar':  ['int', ['string', 'string']] //aqui aparentemente ele invoca as fuções q tem no código C, pq binaryToDecimal é uma função do código
+});
+
+// Função para converter binário em decimal usando a biblioteca C
+function docriptografar(chaverecebida, texto) {
+  return lib2.criptografar(chaverecebida, texto);
+}
+
+
+// // TRECHO DE INTEGRAÇÃO COM C
+// const ffi3 = require('ffi-napi');
+
+const lib3 = ffi.Library('./rc4.so', {
+  criptografia: ['char *', ['string', 'string']]
+});
+// Função para converter binário em decimal usando a biblioteca C
+function rc4Criptografia(key,plaintext) {
+  return lib3.criptografia(key, plaintext);
+}
+
 
 function iniciarServidor() {
   const server = net.createServer((socket) => {
@@ -34,12 +60,21 @@ function iniciarServidor() {
 
 
       dataObject = JSON.parse(data); //GERA OBJETO PARA INTEGRAR COM C
-      const decimalNumber = convertBinaryToDecimal(dataObject.texto); //INTEGRA COM C
-      console.log('O valor em decimal é:', decimalNumber); //PRINTANDO DEPOIS DO CÓDIGO EM C TER CONVERTIDO
+      //console.log('eniviando chave e texto', dataObject.chave, dataObject.texto)
+      let rc4criptografado = ''
+      if(dataObject.criptografia == 'RC4'){
+        const rc4criptografado = rc4Criptografia(dataObject.chave, dataObject.texto);
+
+        console.log('criptografado', rc4criptografado);
+      }
+      else{
+        let descriptografado = 0;
+        descriptografado = docriptografar(dataObject.chave, dataObject.texto)
+      }
+
+      console.log('O valor descriptografado é :', rc4criptografado); //PRINTANDO DEPOIS DO CÓDIGO EM C TER CONVERTIDO
 
       dados_recebidos = `${data}`;
-
-
       // Processar os dados recebidos, se necessário
 
       // Enviar uma resposta de volta para o cliente
