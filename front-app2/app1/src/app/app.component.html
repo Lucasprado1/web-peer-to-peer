@@ -1,11 +1,30 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <title>Exemplo de Botão Angular</title>
-</head>
 <body>
-  <button (click)="enviarDadosParaBackend()">Enviar Dados para o Backend</button>
+  <div style="display: inline-block; width: 50%; margin-top: 20px;">
+    <div>
+      <h2>Aplicação 2:</h2>
+      <h2>Entre com o texto:</h2>
+      <input style="width: 500px" type="text" id="input1" [(ngModel)]="texto" placeholder="Escreva o texto">
+    </div>
 
-  <script src="runtime.js" defer></script>
-  <script src="polyfills.js" defer></script>
-  <script src="styles.js" defer></script>
+    <div>
+      <h2>Entre com a chave:</h2>
+      <input type="text" id="input2" [(ngModel)]="chave" placeholder="Escreva a chave">
+    </div >
+  </div>
+  <div style="display: inline-block; width: 50%;">
+    <h2>Escolha o método criptográfico:</h2>
+
+    <input type="radio" id="opcao1" name="opcao" [(ngModel)]="selectedOption" value="SDES">
+    <label for="opcao1">S-DES</label><br>
+
+    <input type="radio" id="opcao2" name="opcao" [(ngModel)]="selectedOption" value="RC4">
+    <label for="opcao2">RC4</label><br>
+
+  </div>
+
+  <div style="margin-top: 20px; margin-left: 640px">
+  <input (click)="send()" type="button" id="opcao1" name="send-button" value="enviar">
+  </div>
+
+</body>
+

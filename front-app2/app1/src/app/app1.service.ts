@@ -24,7 +24,7 @@ export class App1Service {
   }
 
   receiveDataFromBackend() {
-    this.http.get<any>('http://localhost:4040/pegardados').subscribe(
+    this.http.get<any>('http://localhost:4000/pegardados').subscribe(
       response => {
         console.log('Dados recebidos do backend:', response);
         // Faça o processamento necessário com os dados recebidos do backend
