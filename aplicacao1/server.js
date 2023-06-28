@@ -5,12 +5,38 @@ const cors = require('cors');
 const app = express();
 let dados_recebidos = "sem dados recebidos"
 
+// TRECHO DE INTEGRAÇÃO COM C
+const ffi = require('ffi-napi');
+
+// Carregar a biblioteca compartilhada
+const lib = ffi.Library('./conversor.so', {
+  'binaryToDecimal': ['int64', ['int64']] //aqui aparentemente ele invoca as fuções q tem no código C, pq binaryToDecimal é uma função do código
+});
+
+// Função para converter binário em decimal usando a biblioteca C
+function convertBinaryToDecimal(binaryNumber) {
+  return lib.binaryToDecimal(binaryNumber);
+}
+
+// Utilizar a função convertBinaryToDecimal() no código Node.js
+const binaryNumber = 111; // Exemplo de número binário
+
+
+// INTEGRAÇÃO COM C
+
+
 function iniciarServidor() {
   const server = net.createServer((socket) => {
     console.log('Cliente conectado.');
 
     socket.on('data', (data) => {
       console.log(`Dados recebidos do cliente: ${data}`);
+
+
+      dataObject = JSON.parse(data); //GERA OBJETO PARA INTEGRAR COM C
+      const decimalNumber = convertBinaryToDecimal(dataObject.texto); //INTEGRA COM C
+      console.log('O valor em decimal é:', decimalNumber); //PRINTANDO DEPOIS DO CÓDIGO EM C TER CONVERTIDO
+
       dados_recebidos = `${data}`;
 
 
