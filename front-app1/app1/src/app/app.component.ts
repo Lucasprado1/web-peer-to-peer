@@ -12,15 +12,24 @@ export class AppComponent {
     this.app1service.startDataUpdates();
   }
   title = 'app1';
-  
+
   constructor(private app1service: App1Service) {
-   
+
   }
 
-  enviarDadosParaBackend() {
+  public texto: any = '';
+  public chave: any = '';
+  public selectedOption: any = 'RC4';
+  send(){
+    console.log(this.texto);
+    console.log(this.chave);
+    console.log(this.selectedOption);
+
     const dados = {
       // Dados a serem enviados para o backend
-      teste: 'oi'
+      texto: this.texto,
+      chave: this.chave,
+      criptografia: this.selectedOption
     };
 
     this.app1service.enviarDados(dados).subscribe(
@@ -32,5 +41,4 @@ export class AppComponent {
       }
     );
   }
-
 }
