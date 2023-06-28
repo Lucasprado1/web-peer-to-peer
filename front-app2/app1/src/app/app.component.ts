@@ -7,13 +7,20 @@ import { App1Service } from './app1.service';
   styleUrls: ['./app.component.scss']
 })
 export class AppComponent {
+
+  ngOnInit() {
+    this.app1service.startDataUpdates();
+  }
   title = 'app1';
-  constructor(private app1service: App1Service) { }
   
+  constructor(private app1service: App1Service) {
+   
+  }
+
   enviarDadosParaBackend() {
     const dados = {
       // Dados a serem enviados para o backend
-      teste: "oi da app2"
+      teste: 'oi da app2'
     };
 
     this.app1service.enviarDados(dados).subscribe(
@@ -25,8 +32,5 @@ export class AppComponent {
       }
     );
   }
+
 }
-
-
-
-

@@ -3,6 +3,7 @@ const readline = require('readline');
 const express = require('express');
 const cors = require('cors');
 const app = express();
+let dados_recebidos = "sem dados recebidos"
 
 function iniciarServidor() {
   const server = net.createServer((socket) => {
@@ -10,6 +11,7 @@ function iniciarServidor() {
 
     socket.on('data', (data) => {
       console.log(`Dados recebidos do cliente: ${data}`);
+      dados_recebidos = `${data}`;
       if (data == "desligar"){
         console.log('Mensagem do cliente solicitando desligamento do server')
         desligarServidor();
@@ -92,3 +94,10 @@ app.listen(PORT, () => {
   console.log(`Servidor HTTP ouvindo na porta ${PORT}`);
 });
 
+// Rota GET para receber dados
+app.get('/pegardados', (req, res) => {
+  // Executar a lógica para recuperar os dados desejados
+
+  // Enviar os dados como resposta
+  res.status(200).json(dados_recebidos);
+});
