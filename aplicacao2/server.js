@@ -12,14 +12,7 @@ function iniciarServidor() {
     socket.on('data', (data) => {
       console.log(`Dados recebidos do cliente: ${data}`);
       dados_recebidos = `${data}`;
-      if (data == "desligar"){
-        console.log('Mensagem do cliente solicitando desligamento do server')
-        desligarServidor();
-      }
-      if (data == "cliente"){
-        console.log('virando cliente e bugando tudo')
-        iniciarCliente();
-      }
+
 
       // Processar os dados recebidos, se necessário
 
