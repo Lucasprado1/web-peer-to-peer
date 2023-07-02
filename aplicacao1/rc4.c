@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <iconv.h>
 
 void swap(unsigned char *a, unsigned char *b) {
   unsigned char temp = *a;
@@ -49,11 +50,33 @@ char* criptografia(unsigned char key[256], unsigned char plaintext[256]){
     }
     printf("\n");
 
-    char* result = (char*) malloc(sizeof(char) * 256);
-    strcpy(result, ciphertext);
+    char* result = (char*)malloc(sizeof(char) * (len * 3 + 1));  // Espaço para até 3 bytes por caractere
+    memset(result, 0, sizeof(char) * (len * 3 + 1));
 
+    iconv_t conv = iconv_open("UTF-8", "ISO-8859-1");  // Converter de ISO-8859-1 para UTF-8
+    if (conv == (iconv_t)-1) {
+        perror("iconv_open");
+        free(ciphertext);
+        free(result);
+        return NULL;
+    }
+
+    size_t inbytesleft = len;
+    size_t outbytesleft = len * 3;
+    char* inbuf = (char*)ciphertext;
+    char* outbuf = result;
+
+    if (iconv(conv, &inbuf, &inbytesleft, &outbuf, &outbytesleft) == (size_t)-1) {
+        perror("iconv");
+        iconv_close(conv);
+        free(ciphertext);
+        free(result);
+        return NULL;
+    }
+
+    iconv_close(conv);
     free(ciphertext);
-    return ciphertext;
+    return result;
 
 }
 int main() {

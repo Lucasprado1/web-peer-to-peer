@@ -1,54 +1,11 @@
 const net = require('net');
+const sdes = require('./sdesjs.js');
+const rc4 = require('./rc4js.js');
 const readline = require('readline');
 const express = require('express');
 const cors = require('cors');
 const app = express();
 let dados_recebidos = ""
-
-/* // TRECHO DE INTEGRAÇÃO COM C
-const ffi = require('ffi-napi');
-
-// Carregar a biblioteca compartilhada
-const lib = ffi.Library('./conversor.so', {
-  'binaryToDecimal': ['int64', ['int64']] //aqui aparentemente ele invoca as fuções q tem no código C, pq binaryToDecimal é uma função do código
-});
-
-// Função para converter binário em decimal usando a biblioteca C
-function convertBinaryToDecimal(binaryNumber) {
-  return lib.binaryToDecimal(binaryNumber);
-} */
-
-/* // Utilizar a função convertBinaryToDecimal() no código Node.js
-const binaryNumber = 111; // Exemplo de número binário */
-
-
-// INTEGRAÇÃO COM C
-
-// TRECHO DE INTEGRAÇÃO COM C
-// const ffi2 = require('ffi-napi');
-const ref = require('ref-napi');
-
-// Carregar a biblioteca compartilhada
-const lib2 = ffi.Library('./sdes.so', {
-  'criptografar':  ['int', ['string', 'string']] //aqui aparentemente ele invoca as fuções q tem no código C, pq binaryToDecimal é uma função do código
-});
-
-// Função para converter binário em decimal usando a biblioteca C
-function docriptografar(chaverecebida, texto) {
-  return lib2.criptografar(chaverecebida, texto);
-}
-
-
-// // TRECHO DE INTEGRAÇÃO COM C
-// const ffi3 = require('ffi-napi');
-
-const lib3 = ffi.Library('./rc4.so', {
-  criptografia: ['char *', ['string', 'string']]
-});
-// Função para converter binário em decimal usando a biblioteca C
-function rc4Criptografia(key,plaintext) {
-  return lib3.criptografia(key, plaintext);
-}
 
 
 function iniciarServidor() {
@@ -59,26 +16,29 @@ function iniciarServidor() {
       console.log(`Dados recebidos do cliente: ${data}`);
 
 
-      dataObject = JSON.parse(data); //GERA OBJETO PARA INTEGRAR COM C
-      //console.log('eniviando chave e texto', dataObject.chave, dataObject.texto)
-      let rc4criptografado = ''
-      if(dataObject.criptografia == 'RC4'){
-        const rc4criptografado = rc4Criptografia(dataObject.chave, dataObject.texto);
+      dataObject = JSON.parse(data); //GERA OBJETO
 
-        console.log('criptografado', rc4criptografado);
+      if(dataObject.criptografia == 'RC4'){
+        const rc4descriptografado = rc4.rc4Decrypt(dataObject.texto, dataObject.chave);
+        console.log('O valor descriptografado é :', rc4descriptografado); //PRINTANDO DEPOIS DO CÓDIGO EM C TER CONVERTIDO
+        dadoRecebidoCriptografado = {
+          texto: rc4descriptografado,
+          chave: dataObject.chave,
+          criptografia: 'RC4'
+        }
       }
       else{
-        let descriptografado = 0;
-        descriptografado = docriptografar(dataObject.chave, dataObject.texto)
+        const sdesdescriptografado = sdes.descriptografar(dataObject.chave, dataObject.texto);
+        console.log('O valor descriptografado é :', sdesdescriptografado); //PRINTANDO DEPOIS DO CÓDIGO EM C TER CONVERTIDO
+        dadoRecebidoCriptografado = {
+          texto: sdesdescriptografado,
+          chave: dataObject.chave,
+          criptografia: 'SDES'
+        }
       }
 
-      console.log('O valor descriptografado é :', rc4criptografado); //PRINTANDO DEPOIS DO CÓDIGO EM C TER CONVERTIDO
+      dados_recebidos = dadoRecebidoCriptografado.texto;
 
-      dados_recebidos = dataObject.texto;
-
-      // Processar os dados recebidos, se necessário
-
-      // Enviar uma resposta de volta para o cliente
       const response = 'Resposta do servidor';
       socket.write(response);
     });
@@ -109,8 +69,12 @@ function enviarDadosParaServidorTCP(dados) {
   const clienteTCP = net.createConnection({ port: 3030 }, () => {
     console.log('Conectado ao servidor TCP.');
 
-    // Enviar dados para o servidor TCP
     clienteTCP.write(dados);
+
+    //console.log('eniviando chave e texto', dataObject.chave, dataObject.texto)
+
+    // Enviar dados para o servidor TCP
+
 
     // Fechar a conexão após o envio dos dados
     clienteTCP.end();
@@ -134,7 +98,31 @@ app.post('/dados', (req, res) => {
 
   // Executar a lógica desejada com os dados recebidos
   console.log('Dados recebidos do Angular:', dadosRecebidos);
-  enviarDadosParaServidorTCP(JSON.stringify(dadosRecebidos));
+
+  dataObject = JSON.parse(JSON.stringify(dadosRecebidos)); //GERA OBJETO PARA INTEGRAR COM C
+
+  if(dataObject.criptografia == 'RC4'){
+    const rc4criptografado = rc4.rc4Encrypt(dataObject.texto, dataObject.chave);
+    console.log('rc4 criptografado para envio', rc4criptografado);
+
+    dadoRecebidoCriptografado = {
+      texto: rc4criptografado,
+      chave: dataObject.chave,
+      criptografia: 'RC4'
+    }
+  }
+  else{
+    const sdescriptografado = sdes.criptografar(dataObject.chave, dataObject.texto);
+    console.log('sdes criptografado para envio', sdescriptografado);
+
+    dadoRecebidoCriptografado = {
+      texto: sdescriptografado,
+      chave: dataObject.chave,
+      criptografia: 'SDES'
+    }
+
+  }
+  enviarDadosParaServidorTCP(JSON.stringify(dadoRecebidoCriptografado));
   res.status(200).json({ message: 'Dados recebidos com sucesso!' });
 });
 
