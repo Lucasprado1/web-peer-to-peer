@@ -79,7 +79,11 @@ function enviarDadosParaServidorTCP(dados) {
     // Fechar a conexão após o envio dos dados
     clienteTCP.end();
   });
+  clienteTCP.on('data', (data) => {
+      console.log(`Teste resposta do servidor: ${data}`);
 
+
+  });
   clienteTCP.on('end', () => {
     console.log('Desconectado do servidor TCP.');
   });
