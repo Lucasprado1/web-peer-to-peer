@@ -1,5 +1,7 @@
 const net = require('net');
 const readline = require('readline');
+const sdes = require('./sdesjs.js');
+const rc4 = require('./rc4js.js');
 const express = require('express');
 const cors = require('cors');
 const app = express();
@@ -12,10 +14,29 @@ function iniciarServidor() {
     socket.on('data', (data) => {
       console.log(`Dados recebidos do cliente: ${data}`);
       dataObject = JSON.parse(data); //GERA OBJETO PARA INTEGRAR COM C
-      dados_recebidos = dataObject.texto;
-      // Processar os dados recebidos, se necessário
+      console.log('antes da descriptografia :', dataObject.texto);
 
-      // Enviar uma resposta de volta para o cliente
+      if(dataObject.criptografia == 'RC4'){
+        const rc4descriptografado = rc4.rc4Decrypt(dataObject.texto, dataObject.chave);
+        console.log('O valor descriptografado é :', rc4descriptografado);
+        dadoRecebidoCriptografado = {
+          texto: rc4descriptografado,
+          chave: dataObject.chave,
+          criptografia: 'RC4'
+        }
+      }
+      else{
+        const sdesdescriptografado = sdes.descriptografar(dataObject.chave, dataObject.texto);
+        console.log('O valor descriptografado é :', sdesdescriptografado);
+        dadoRecebidoCriptografado = {
+          texto: sdesdescriptografado,
+          chave: dataObject.chave,
+          criptografia: 'SDES'
+        }
+      }
+
+      dados_recebidos = dadoRecebidoCriptografado.texto;
+
       const response = 'Resposta do servidor';
       socket.write(response);
     });
@@ -50,7 +71,7 @@ function desligaServidor(){
 // Função para enviar dados ao servidor TCP
 function enviarDadosParaServidorTCP(dados) {
   const clienteTCP = net.createConnection({ port: 3000 }, () => {
-    console.log('Conectado ao servidor TCP.');
+    console.log('Conectado para envio ao servidor TCP 1.');
 
     // Enviar dados para o servidor TCP
     clienteTCP.write(dados);
@@ -77,7 +98,32 @@ app.post('/dados', (req, res) => {
 
   // Executar a lógica desejada com os dados recebidos
   console.log('Dados recebidos do Angular:', dadosRecebidos);
-  enviarDadosParaServidorTCP(JSON.stringify(dadosRecebidos));
+
+  dataObject = JSON.parse(JSON.stringify(dadosRecebidos)); //GERA OBJETO PARA INTEGRAR COM C
+
+  if(dataObject.criptografia == 'RC4'){
+    const rc4criptografado = rc4.rc4Encrypt(dataObject.texto, dataObject.chave);
+    console.log('rc4 criptografado para envio', rc4criptografado);
+
+    dadoRecebidoCriptografado = {
+      texto: rc4criptografado,
+      chave: dataObject.chave,
+      criptografia: 'RC4'
+    }
+  }
+  else{
+    const sdescriptografado = sdes.criptografar(dataObject.chave, dataObject.texto);
+    console.log('sdes criptografado para envio', sdescriptografado);
+
+    dadoRecebidoCriptografado = {
+      texto: sdescriptografado,
+      chave: dataObject.chave,
+      criptografia: 'SDES'
+    }
+
+  }
+
+  enviarDadosParaServidorTCP(JSON.stringify(dadoRecebidoCriptografado));
   res.status(200).json({ message: 'Dados recebidos com sucesso!' });
 });
 

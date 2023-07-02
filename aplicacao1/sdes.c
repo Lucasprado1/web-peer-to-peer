@@ -173,8 +173,8 @@ char* decripty(char *b, char *k1, char *k2) {
 
 int criptografar(char chaverecebida[], char texto[]){
 
-    printf("chave recebida %s\n", chaverecebida);
-     printf("texto %s\n", texto);
+    // printf("chave recebida %s\n", chaverecebida);
+    //  printf("texto %s\n", texto);
 
   int i;
 
@@ -206,15 +206,15 @@ int criptografar(char chaverecebida[], char texto[]){
 
 
 
-   int decimalNumber = 0;
-    int length = strlen(responses[0]);
-    for (int i = 0; i < length; i++) {
-        decimalNumber = decimalNumber * 2 + (responses[0][i] - '0');
-    }
+  //  int decimalNumber = 0;
+  //   int length = strlen(responses[0]);
+  //   for (int i = 0; i < length; i++) {
+  //       decimalNumber = decimalNumber * 2 + (responses[0][i] - '0');
+  //   }
 
 
 
-    return decimalNumber;
+    return responses;
 
 }
 int descriptografar(char chaverecebida[], char texto[]){
