@@ -12,6 +12,15 @@ const p = 97
 var yb=null;
 var ya=0;
 var key = null;
+const iv = "10101010"
+
+function generateIV() {
+  var iv = "";
+  for (var i = 0; i < 8; i++) {
+    iv += Math.floor(Math.random() * 2).toString();
+  }
+  return iv;
+}
 
 
 function iniciarServidor() {
@@ -43,18 +52,26 @@ function iniciarServidor() {
           }
         }
         else{
-          const sdesdescriptografado = sdes.descriptografar(dataObject.isDh? key : dataObject.chave, dataObject.texto);
-          console.log('O valor descriptografado é :', sdesdescriptografado); //PRINTANDO DEPOIS DO CÓDIGO EM C TER CONVERTIDO
+          if(dataObject.sdesType && dataObject.sdesType =="ecb"){
+            var sdesdescriptografado = sdes.ecbDecrypt(dataObject.isDh? key : dataObject.chave, dataObject.texto);
+            console.log('sdes descriptografado com ECB para envio', sdesdescriptografado);
+          }
+          else {
+            var sdesdescriptografado = sdes.cbcDecrypt(dataObject.isDh? key : dataObject.chave, dataObject.texto, iv);
+            console.log('sdes descriptografado com cbc para envio', sdesdescriptografado);
+          }
+          // const sdesdescriptografado = sdes.descriptografar(dataObject.isDh? key : dataObject.chave, dataObject.texto);
+          // console.log('O valor descriptografado é :', sdesdescriptografado); //PRINTANDO DEPOIS DO CÓDIGO EM C TER CONVERTIDO
           dadoRecebidoCriptografado = {
             texto: sdesdescriptografado,
             chave: dataObject.isDh? key : dataObject.chave,
             criptografia: 'SDES'
           }
         }
-  
+
         dados_recebidos = dadoRecebidoCriptografado.texto;
       }
-      
+
     });
 
 
@@ -136,7 +153,7 @@ app.post('/dados', async (req, res) => {
         }
       }, 100);
     });
-  
+
   }
   if(dataObject.criptografia == 'RC4'){
     const rc4criptografado = rc4.rc4Encrypt(dataObject.texto, dataObject.isDh? key : dataObject.chave);
@@ -149,13 +166,22 @@ app.post('/dados', async (req, res) => {
     }
   }
   else{
-    const sdescriptografado = sdes.criptografar(dataObject.isDh? key : dataObject.chave, dataObject.texto);
-    console.log('sdes criptografado para envio', sdescriptografado);
+    if(dataObject.sdesType && dataObject.sdesType =="ecb"){
+      var sdescriptografado = sdes.ecbEncrypt(dataObject.isDh? key : dataObject.chave, dataObject.texto);
+      console.log('sdes criptografado com ECB para envio', sdescriptografado);
+    }
+    else {
+      var sdescriptografado = sdes.cbcEncrypt(dataObject.isDh? key : dataObject.chave, dataObject.texto, iv);
+      console.log('sdes criptografado com cbc para envio', sdescriptografado);
+    }
+    // const sdescriptografado = sdes.criptografar(dataObject.isDh? key : dataObject.chave, dataObject.texto);
+    // console.log('sdes criptografado para envio', sdescriptografado);
 
     dadoRecebidoCriptografado = {
       texto: sdescriptografado,
       chave: dataObject.isDh? key : dataObject.chave,
-      criptografia: 'SDES'
+      criptografia: 'SDES',
+      sdesType: dataObject.sdesType
     }
 
   }

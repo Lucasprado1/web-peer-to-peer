@@ -22,18 +22,26 @@
     <label for="opcao2">RC4</label><br>
 
   </div>
-  
+  <div class="div" *ngIf="selectedOption=='SDES'">
+    <br>
+    <h2>Escolha um dos tipos:</h2>
+    <input type="radio" id="opcao3" name="opca2" [(ngModel)]="sdesType" value="ecb">
+    <label for="opcao3">ECB</label><br>
+
+    <input type="radio" id="opcao4" name="opcao2" [(ngModel)]="sdesType" value="cbc">
+    <label for="opcao4">CBC</label><br>
+  </div>
   <div>
     <br>
   <input (click)="send()" type="button" id="opcao1" name="send-button" value="enviar">
-  
+
     <h1>Resposta da outra aplicação:</h1>
     <p>{{chatResponse}}</p>
   </div>
-  
+
 
   <div style="display: inline-block; width: 50%;">
-    
+
   </div>
 
 </body>

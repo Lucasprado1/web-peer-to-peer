@@ -22,14 +22,16 @@ export class AppComponent {
   public selectedOption: any = 'RC4';
   public chatResponse = ''
   public isDh: boolean = false;
+  public sdesType: any = 'ecb';
   send(){
-  
+
     const dados = {
       // Dados a serem enviados para o backend
       texto: this.texto,
       chave: this.chave,
       criptografia: this.selectedOption,
-      isDh: this.isDh
+      isDh: this.isDh,
+      sdesType: this.selectedOption =="SDES"? this.sdesType:null
     };
 
     this.app1service.enviarDados(dados).subscribe(

@@ -1,3 +1,4 @@
+
 let P10 = [3, 5, 2, 7, 4, 10, 1, 9, 8, 6];
 let P8 = [6, 3, 7, 4, 8, 5, 10, 9];
 let IP = [2, 6, 3, 1, 4, 8, 5, 7];
@@ -137,12 +138,106 @@ function descriptografar(chaverecebida, texto) {
   return decripty(texto, k1, k2);
 }
 
-module.exports = {
-    criptografar: criptografar,
-    descriptografar: descriptografar
-};
+
 // exemplo de uso
 let chave = "1000000000";
 let texto = "00101011";
 
-// console.log(descriptografar(chave, texto));
+
+function ecbEncrypt(key, plaintext) {
+
+  var blocks = [];
+  for (var i = 0; i < plaintext.length; i += 8) {
+    blocks.push(plaintext.slice(i, i + 8));
+  }
+
+  var ciphertext = "";
+  for (var j = 0; j < blocks.length; j++) {
+
+    var blockCipher = criptografar(key,blocks[j]);
+    ciphertext += blockCipher;
+  }
+
+  return ciphertext;
+}
+
+// Modo ECB - Decifragem
+function ecbDecrypt(key, ciphertext) {
+
+  var blocks = [];
+  for (var i = 0; i < ciphertext.length; i += 8) {
+    blocks.push(ciphertext.slice(i, i + 8));
+  }
+
+  var plaintext = "";
+  for (var j = 0; j < blocks.length; j++) {
+
+    var blockPlain = descriptografar(key,blocks[j]);
+    plaintext += blockPlain;
+  }
+
+  return plaintext;
+}
+
+// Modo CBC - Cifragem
+function cbcEncrypt(key, plaintext, iv) {
+
+  var blocks = [];
+  for (var i = 0; i < plaintext.length; i += 8) {
+    blocks.push(plaintext.slice(i, i + 8));
+  }
+
+  var ciphertext = "";
+  var previousBlock = iv;
+  for (var j = 0; j < blocks.length; j++) {
+
+    var blockXor = xorBlocks(blocks[j], previousBlock);
+
+    var blockCipher = criptografar( key, blockXor);
+    ciphertext += blockCipher;
+    previousBlock = blockCipher;
+  }
+
+  return ciphertext;
+}
+
+// Modo CBC - Decifragem
+function cbcDecrypt(key, ciphertext, iv) {
+
+  var blocks = [];
+  for (var i = 0; i < ciphertext.length; i += 8) {
+    blocks.push(ciphertext.slice(i, i + 8));
+  }
+
+  var plaintext = "";
+  var previousBlock = iv;
+  for (var j = 0; j < blocks.length; j++) {
+
+    var blockPlain = descriptografar( key,blocks[j]);
+
+    var blockXor = xorBlocks(blockPlain, previousBlock);
+    plaintext += blockXor;
+    previousBlock = blocks[j];
+  }
+
+  return plaintext;
+}
+
+
+function xorBlocks(block1, block2) {
+  var xorResult = "";
+  for (var i = 0; i < block1.length; i++) {
+    xorResult += block1[i] === block2[i] ? "0" : "1";
+  }
+  return xorResult;
+}
+
+
+module.exports = {
+  criptografar: criptografar,
+  descriptografar: descriptografar,
+  ecbEncrypt: ecbEncrypt,
+  ecbDecrypt: ecbDecrypt,
+  cbcEncrypt: cbcEncrypt,
+  cbcDecrypt: cbcDecrypt
+};

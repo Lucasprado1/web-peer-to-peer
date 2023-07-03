@@ -12,6 +12,7 @@ const p = 97
 var yb=0;
 var ya= null;
 var key = null;
+const iv = "10101010"
 
 function iniciarServidor() {
   const server = net.createServer((socket) => {
@@ -19,7 +20,7 @@ function iniciarServidor() {
 
     socket.on('data', (data) => {
       console.log(`Dados recebidos do cliente: ${data}`);
-      dataObject = JSON.parse(data); 
+      dataObject = JSON.parse(data);
 
       if(dataObject.sharingKey){
         ya = dataObject.key
@@ -42,8 +43,16 @@ function iniciarServidor() {
         }
       }
       else{
-        const sdesdescriptografado = sdes.descriptografar(dataObject.isDh? key : dataObject.chave, dataObject.texto);
-        console.log('O valor descriptografado é :', sdesdescriptografado);
+        if(dataObject.sdesType && dataObject.sdesType =="ecb"){
+          var sdesdescriptografado = sdes.ecbDecrypt(dataObject.isDh? key : dataObject.chave, dataObject.texto);
+          console.log('sdes descriptografado com ECB para envio', sdesdescriptografado);
+        }
+        else {
+          var sdesdescriptografado = sdes.cbcDecrypt(dataObject.isDh? key : dataObject.chave, dataObject.texto, iv);
+          console.log('sdes descriptografado com CBC para envio', sdesdescriptografado);
+        }
+        // const sdesdescriptografado = sdes.descriptografar(dataObject.isDh? key : dataObject.chave, dataObject.texto);
+        // console.log('O valor descriptografado é :', sdesdescriptografado);
         dadoRecebidoCriptografado = {
           texto: sdesdescriptografado,
           chave: dataObject.isDh? key : dataObject.chave,
@@ -53,7 +62,7 @@ function iniciarServidor() {
 
       dados_recebidos = dadoRecebidoCriptografado.texto;
       }
-    
+
     });
 
 
@@ -122,7 +131,7 @@ app.post('/dados', async (req, res) => {
   console.log('Dados recebidos do Angular:', dadosRecebidos);
   dadoRecebidoCriptografado = {}
   dataObject = JSON.parse(JSON.stringify(dadosRecebidos)); //GERA OBJETO PARA INTEGRAR COM C
-  
+
   if (dataObject.isDh) {
     xb = Math.floor(Math.random() * p);
     yb = (a * xb) % p;
@@ -138,7 +147,7 @@ app.post('/dados', async (req, res) => {
         }
       }, 100);
     });
-  
+
   }
   if(dataObject.criptografia == 'RC4'){
     const rc4criptografado = rc4.rc4Encrypt(dataObject.texto, dataObject.isDh? key : dataObject.chave);
@@ -151,13 +160,22 @@ app.post('/dados', async (req, res) => {
     }
   }
   else{
-    const sdescriptografado = sdes.criptografar(dataObject.isDh? key : dataObject.chave, dataObject.texto);
-    console.log('sdes criptografado para envio', sdescriptografado);
+    if(dataObject.sdesType && dataObject.sdesType =="ecb"){
+      var sdescriptografado = sdes.ecbEncrypt(dataObject.isDh? key : dataObject.chave, dataObject.texto);
+      console.log('sdes criptografado com ECB para envio', sdescriptografado);
+    }
+    else {
+      var sdescriptografado = sdes.cbcEncrypt(dataObject.isDh? key : dataObject.chave, dataObject.texto, iv);
+      console.log('sdes criptografado com CBC para envio', sdescriptografado);
+    }
+    // const sdescriptografado = sdes.criptografar(dataObject.isDh? key : dataObject.chave, dataObject.texto);
+    // console.log('sdes criptografado para envio', sdescriptografado);
 
     dadoRecebidoCriptografado = {
       texto: sdescriptografado,
       chave: dataObject.isDh? key : dataObject.chave,
-      criptografia: 'SDES'
+      criptografia: 'SDES',
+      sdesType: dataObject.sdesType
     }
 
   }
