@@ -3,17 +3,16 @@
     <div>
       <h2>Aplicação 2:</h2>
       <h2>Entre com o texto:</h2>
-      <input style="width: 500px" type="text" id="input1" [(ngModel)]="texto" placeholder="Escreva o texto">
+      <input style="width: 400px" type="text" id="input1" [(ngModel)]="texto" placeholder="Escreva o texto">
     </div>
 
-    <div>
+    <div *ngIf = "!isDh">
       <h2>Entre com a chave:</h2>
       <input type="text" id="input2" [(ngModel)]="chave" placeholder="Escreva a chave">
     </div >
-    <h1>Resposta da outra aplicação:</h1>
-    <p>{{chatResponse}}</p>
-  </div>
-  <div style="display: inline-block; width: 50%;">
+    <br>
+    <label class="bold-label">Usar DH</label>
+<input type="checkbox" [(ngModel)]="isDh">
     <h2>Escolha o método criptográfico:</h2>
 
     <input type="radio" id="opcao1" name="opcao" [(ngModel)]="selectedOption" value="SDES">
@@ -23,9 +22,18 @@
     <label for="opcao2">RC4</label><br>
 
   </div>
-
-  <div style="margin-top: 20px; margin-left: 640px">
+  
+  <div>
+    <br>
   <input (click)="send()" type="button" id="opcao1" name="send-button" value="enviar">
+  
+    <h1>Resposta da outra aplicação:</h1>
+    <p>{{chatResponse}}</p>
+  </div>
+  
+
+  <div style="display: inline-block; width: 50%;">
+    
   </div>
 
 </body>

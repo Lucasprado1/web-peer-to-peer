@@ -7,38 +7,53 @@ const cors = require('cors');
 const app = express();
 let dados_recebidos = ""
 
+const a = 5
+const p = 97
+var yb=0;
+var ya= null;
+var key = null;
+
 function iniciarServidor() {
   const server = net.createServer((socket) => {
     console.log('Cliente conectado.');
 
     socket.on('data', (data) => {
       console.log(`Dados recebidos do cliente: ${data}`);
-      dataObject = JSON.parse(data); //GERA OBJETO PARA INTEGRAR COM C
-      console.log('antes da descriptografia :', dataObject.texto);
+      dataObject = JSON.parse(data); 
+
+      if(dataObject.sharingKey){
+        ya = dataObject.key
+        var xb = Math.floor(Math.random() * p);
+        yb = (a * xb) % p
+        socket.write(JSON.stringify({value: yb}));
+        key = String((ya* xb) % p)
+        console.log("Chave DH após todos os calculos:", key)
+      }
+      else{
+        console.log('antes da descriptografia :', dataObject.texto);
 
       if(dataObject.criptografia == 'RC4'){
-        const rc4descriptografado = rc4.rc4Decrypt(dataObject.texto, dataObject.chave);
+        const rc4descriptografado = rc4.rc4Decrypt(dataObject.texto, dataObject.isDh? key : dataObject.chave);
         console.log('O valor descriptografado é :', rc4descriptografado);
         dadoRecebidoCriptografado = {
           texto: rc4descriptografado,
-          chave: dataObject.chave,
+          chave: dataObject.isDh? key : dataObject.chave,
           criptografia: 'RC4'
         }
       }
       else{
-        const sdesdescriptografado = sdes.descriptografar(dataObject.chave, dataObject.texto);
+        const sdesdescriptografado = sdes.descriptografar(dataObject.isDh? key : dataObject.chave, dataObject.texto);
         console.log('O valor descriptografado é :', sdesdescriptografado);
         dadoRecebidoCriptografado = {
           texto: sdesdescriptografado,
-          chave: dataObject.chave,
+          chave: dataObject.isDh? key : dataObject.chave,
           criptografia: 'SDES'
         }
       }
 
       dados_recebidos = dadoRecebidoCriptografado.texto;
-
-      const response = 'Resposta do servidor';
-      socket.write(response);
+      }
+    
     });
 
 
@@ -80,6 +95,13 @@ function enviarDadosParaServidorTCP(dados) {
     clienteTCP.end();
   });
 
+
+  clienteTCP.on('data', (data) => {
+    data = JSON.parse(data);
+    ya = data.value;
+    console.log(`Chave recebida: ${data}`);
+  });
+
   clienteTCP.on('end', () => {
     console.log('Desconectado do servidor TCP.');
   });
@@ -93,31 +115,48 @@ function enviarDadosParaServidorTCP(dados) {
 app.use(cors());
 app.use(express.json());
 
-app.post('/dados', (req, res) => {
+app.post('/dados', async (req, res) => {
   const dadosRecebidos = req.body; // Obter os dados enviados pelo Angular
 
   // Executar a lógica desejada com os dados recebidos
   console.log('Dados recebidos do Angular:', dadosRecebidos);
-
+  dadoRecebidoCriptografado = {}
   dataObject = JSON.parse(JSON.stringify(dadosRecebidos)); //GERA OBJETO PARA INTEGRAR COM C
+  
+  if (dataObject.isDh) {
+    xb = Math.floor(Math.random() * p);
+    yb = (a * xb) % p;
+    enviarDadosParaServidorTCP(JSON.stringify({ sharingKey: true, key: yb }));
 
+    await new Promise((resolve) => {
+      const intervalId = setInterval(() => {
+        if (ya !== null) {
+          clearInterval(intervalId);
+          key = String((ya * xb) % p);
+          console.log("Chave DH após todos os cálculos:", key);
+          resolve();
+        }
+      }, 100);
+    });
+  
+  }
   if(dataObject.criptografia == 'RC4'){
-    const rc4criptografado = rc4.rc4Encrypt(dataObject.texto, dataObject.chave);
+    const rc4criptografado = rc4.rc4Encrypt(dataObject.texto, dataObject.isDh? key : dataObject.chave);
     console.log('rc4 criptografado para envio', rc4criptografado);
 
     dadoRecebidoCriptografado = {
       texto: rc4criptografado,
-      chave: dataObject.chave,
+      chave: dataObject.isDh? key : dataObject.chave,
       criptografia: 'RC4'
     }
   }
   else{
-    const sdescriptografado = sdes.criptografar(dataObject.chave, dataObject.texto);
+    const sdescriptografado = sdes.criptografar(dataObject.isDh? key : dataObject.chave, dataObject.texto);
     console.log('sdes criptografado para envio', sdescriptografado);
 
     dadoRecebidoCriptografado = {
       texto: sdescriptografado,
-      chave: dataObject.chave,
+      chave: dataObject.isDh? key : dataObject.chave,
       criptografia: 'SDES'
     }
 
@@ -139,3 +178,4 @@ app.get('/pegardados', (req, res) => {
   // Enviar os dados como resposta
   res.status(200).json(dados_recebidos);
 });
+

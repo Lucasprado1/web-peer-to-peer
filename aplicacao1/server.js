@@ -7,6 +7,12 @@ const cors = require('cors');
 const app = express();
 let dados_recebidos = ""
 
+const a = 5
+const p = 97
+var yb=null;
+var ya=0;
+var key = null;
+
 
 function iniciarServidor() {
   const server = net.createServer((socket) => {
@@ -17,30 +23,38 @@ function iniciarServidor() {
 
 
       dataObject = JSON.parse(data); //GERA OBJETO
-
-      if(dataObject.criptografia == 'RC4'){
-        const rc4descriptografado = rc4.rc4Decrypt(dataObject.texto, dataObject.chave);
-        console.log('O valor descriptografado é :', rc4descriptografado); //PRINTANDO DEPOIS DO CÓDIGO EM C TER CONVERTIDO
-        dadoRecebidoCriptografado = {
-          texto: rc4descriptografado,
-          chave: dataObject.chave,
-          criptografia: 'RC4'
-        }
+      if(dataObject.sharingKey){
+        yb= dataObject.key
+        var xa = Math.floor(Math.random() * p);
+        ya = (a * xa) % p
+        socket.write(JSON.stringify({value: ya}));
+        key = String((yb* xa) % p)
+        console.log("Chave DH após todos os calculos:", key)
       }
       else{
-        const sdesdescriptografado = sdes.descriptografar(dataObject.chave, dataObject.texto);
-        console.log('O valor descriptografado é :', sdesdescriptografado); //PRINTANDO DEPOIS DO CÓDIGO EM C TER CONVERTIDO
-        dadoRecebidoCriptografado = {
-          texto: sdesdescriptografado,
-          chave: dataObject.chave,
-          criptografia: 'SDES'
+        console.log('antes da descriptografia :', dataObject.texto);
+        if(dataObject.criptografia == 'RC4'){
+          const rc4descriptografado = rc4.rc4Decrypt(dataObject.texto, dataObject.isDh? key : dataObject.chave);
+          console.log('O valor descriptografado é :', rc4descriptografado); //PRINTANDO DEPOIS DO CÓDIGO EM C TER CONVERTIDO
+          dadoRecebidoCriptografado = {
+            texto: rc4descriptografado,
+            chave: dataObject.isDh? key : dataObject.chave,
+            criptografia: 'RC4'
+          }
         }
+        else{
+          const sdesdescriptografado = sdes.descriptografar(dataObject.isDh? key : dataObject.chave, dataObject.texto);
+          console.log('O valor descriptografado é :', sdesdescriptografado); //PRINTANDO DEPOIS DO CÓDIGO EM C TER CONVERTIDO
+          dadoRecebidoCriptografado = {
+            texto: sdesdescriptografado,
+            chave: dataObject.isDh? key : dataObject.chave,
+            criptografia: 'SDES'
+          }
+        }
+  
+        dados_recebidos = dadoRecebidoCriptografado.texto;
       }
-
-      dados_recebidos = dadoRecebidoCriptografado.texto;
-
-      const response = 'Resposta do servidor';
-      socket.write(response);
+      
     });
 
 
@@ -80,6 +94,12 @@ function enviarDadosParaServidorTCP(dados) {
     clienteTCP.end();
   });
 
+  clienteTCP.on('data', (data) => {
+    data = JSON.parse(data);
+    yb = data.value;
+    console.log(`Chave recebida: ${data.value}`);
+  });
+
   clienteTCP.on('end', () => {
     console.log('Desconectado do servidor TCP.');
   });
@@ -93,31 +113,48 @@ function enviarDadosParaServidorTCP(dados) {
 app.use(cors());
 app.use(express.json());
 
-app.post('/dados', (req, res) => {
+app.post('/dados', async (req, res) => {
   const dadosRecebidos = req.body; // Obter os dados enviados pelo Angular
 
   // Executar a lógica desejada com os dados recebidos
   console.log('Dados recebidos do Angular:', dadosRecebidos);
-
+  dadoRecebidoCriptografado = {}
   dataObject = JSON.parse(JSON.stringify(dadosRecebidos)); //GERA OBJETO PARA INTEGRAR COM C
 
+  if (dataObject.isDh) {
+    xa = Math.floor(Math.random() * p);
+    ya = (a * xa) % p;
+    enviarDadosParaServidorTCP(JSON.stringify({ sharingKey: true, key: ya }));
+
+    await new Promise((resolve) => {
+      const intervalId = setInterval(() => {
+        if (yb !== null) {
+          clearInterval(intervalId);
+          key = String((yb * xa) % p);
+          console.log("Chave DH após todos os cálculos:", key);
+          resolve();
+        }
+      }, 100);
+    });
+  
+  }
   if(dataObject.criptografia == 'RC4'){
-    const rc4criptografado = rc4.rc4Encrypt(dataObject.texto, dataObject.chave);
+    const rc4criptografado = rc4.rc4Encrypt(dataObject.texto, dataObject.isDh? key : dataObject.chave);
     console.log('rc4 criptografado para envio', rc4criptografado);
 
     dadoRecebidoCriptografado = {
       texto: rc4criptografado,
-      chave: dataObject.chave,
+      chave: dataObject.isDh? key : dataObject.chave,
       criptografia: 'RC4'
     }
   }
   else{
-    const sdescriptografado = sdes.criptografar(dataObject.chave, dataObject.texto);
+    const sdescriptografado = sdes.criptografar(dataObject.isDh? key : dataObject.chave, dataObject.texto);
     console.log('sdes criptografado para envio', sdescriptografado);
 
     dadoRecebidoCriptografado = {
       texto: sdescriptografado,
-      chave: dataObject.chave,
+      chave: dataObject.isDh? key : dataObject.chave,
       criptografia: 'SDES'
     }
 

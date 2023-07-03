@@ -21,16 +21,15 @@ export class AppComponent {
   public chave: any = '';
   public selectedOption: any = 'RC4';
   public chatResponse = ''
+  public isDh: boolean = false;
   send(){
-    console.log(this.texto);
-    console.log(this.chave);
-    console.log(this.selectedOption);
-
+    
     const dados = {
       // Dados a serem enviados para o backend
       texto: this.texto,
       chave: this.chave,
-      criptografia: this.selectedOption
+      criptografia: this.selectedOption,
+      isDh: this.isDh
     };
 
     this.app1service.enviarDados(dados).subscribe(
